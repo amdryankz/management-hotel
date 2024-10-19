@@ -10,6 +10,7 @@ use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Wizard;
@@ -33,43 +34,70 @@ class ReservationResource extends Resource
     {
         return $form
             ->schema([
-                Grid::make(2)
-                    ->schema([
-                        Select::make('guest_id')
-                            ->label('Guest')
-                            ->relationship('guest', 'name')
-                            ->required()
-                            ->placeholder('Select guest'),
+                Wizard::make([
+                    Wizard\Step::make('Guest')
+                        ->schema([
+                            Select::make('guest_selection')
+                                ->label('Select or Create Guest')
+                                ->options([
+                                    'existing' => 'Select Existing Guest',
+                                    'new' => 'Create New Guest',
+                                ])
+                                ->reactive()
+                                ->required(),
 
-                        Select::make('room_ids')
-                            ->label('Rooms')
-                            ->options(Room::all()->pluck('room_number', 'id')->toArray()) // Adjust this line
-                            ->required()
-                            ->multiple()
-                            ->placeholder('Select rooms'),
+                            Select::make('guest_id')
+                                ->label('Guest')
+                                ->relationship('guest', 'name')
+                                ->requiredWith('guest_selection', 'existing')
+                                ->placeholder('Select existing guest')
+                                ->hidden(fn(callable $get) => $get('guest_selection') !== 'existing'),
 
-                        TextInput::make('check_in_date')
-                            ->label('Check-in Date')
-                            ->required()
-                            ->type('date'),
+                            TextInput::make('guest_name')
+                                ->label('New Guest Name')
+                                ->requiredWith('guest_selection', 'new')
+                                ->placeholder('Enter guest name')
+                                ->hidden(fn(callable $get) => $get('guest_selection') !== 'new'),
 
-                        TextInput::make('check_out_date')
-                            ->label('Check-out Date')
-                            ->required()
-                            ->type('date'),
+                            TextInput::make('guest_phone')
+                                ->label('New Guest Phone')
+                                ->requiredWith('guest_selection', 'new')
+                                ->placeholder('Enter guest phone')
+                                ->hidden(fn(callable $get) => $get('guest_selection') !== 'new'),
+                        ]),
+                    Wizard\Step::make('Room')
+                        ->schema([
+                            Select::make('room_ids')
+                                ->label('Rooms')
+                                ->relationship('rooms', 'room_number')
+                                ->options(Room::all()->pluck('room_number', 'id')->toArray())
+                                ->required()
+                                ->multiple()
+                                ->placeholder('Select rooms'),
 
-                        Select::make('status')
-                            ->label('Status')
-                            ->options([
-                                'pending' => 'Pending',
-                                'confirmed' => 'Confirmed',
-                                'canceled' => 'Canceled',
-                            ])
-                            ->default('pending')
-                            ->required(),
+                            TextInput::make('check_in_date')
+                                ->label('Check-in Date')
+                                ->required()
+                                ->type('date'),
 
-                        Hidden::make('reserved_by')->default(Auth::id())
-                    ])
+                            TextInput::make('check_out_date')
+                                ->label('Check-out Date')
+                                ->required()
+                                ->type('date'),
+
+                            Select::make('status')
+                                ->label('Status')
+                                ->options([
+                                    'pending' => 'Pending',
+                                    'confirmed' => 'Confirmed',
+                                    'canceled' => 'Canceled',
+                                ])
+                                ->default('pending')
+                                ->required(),
+
+                            Hidden::make('reserved_by')->default(Auth::id())
+                        ]),
+                ])->columnSpan('full'),
             ]);
     }
 
