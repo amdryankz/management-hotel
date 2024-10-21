@@ -8,6 +8,7 @@ use App\Models\Reservation;
 use App\Models\Room;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Radio;
@@ -48,6 +49,7 @@ class ReservationResource extends Resource
 
                             Select::make('guest_id')
                                 ->label('Guest')
+                                ->searchable()
                                 ->relationship('guest', 'name')
                                 ->requiredWith('guest_selection', 'existing')
                                 ->placeholder('Select existing guest')
@@ -75,15 +77,13 @@ class ReservationResource extends Resource
                                 ->multiple()
                                 ->placeholder('Select rooms'),
 
-                            TextInput::make('check_in_date')
-                                ->label('Check-in Date')
-                                ->required()
-                                ->type('date'),
+                            DateTimePicker::make('check_in_date')
+                                ->label('Check-in')
+                                ->required(),
 
-                            TextInput::make('check_out_date')
-                                ->label('Check-out Date')
-                                ->required()
-                                ->type('date'),
+                            DateTimePicker::make('check_out_date')
+                                ->label('Check-out')
+                                ->required(),
 
                             Select::make('status')
                                 ->label('Status')
