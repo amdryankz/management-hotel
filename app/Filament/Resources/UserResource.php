@@ -60,7 +60,8 @@ class UserResource extends Resource
                 TextColumn::make('role')->sortable(),
                 TextColumn::make('created_at')
                     ->label('Created')
-                    ->dateTime(),
+                    ->dateTime()
+                    ->formatStateUsing(fn($state) => \Carbon\Carbon::parse($state)->translatedFormat('j F Y, H:i')),
             ])
             ->filters([
                 //

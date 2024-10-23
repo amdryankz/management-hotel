@@ -55,12 +55,14 @@ class CheckInReservationResource extends Resource
                 TextColumn::make('check_in_date')
                     ->label('Check-in Date')
                     ->sortable()
-                    ->dateTime(),
+                    ->date()
+                    ->formatStateUsing(fn($state) => \Carbon\Carbon::parse($state)->translatedFormat('j F Y')),
 
                 TextColumn::make('check_out_date')
                     ->label('Check-out Date')
                     ->sortable()
-                    ->dateTime(),
+                    ->date()
+                    ->formatStateUsing(fn($state) => \Carbon\Carbon::parse($state)->translatedFormat('j F Y')),
 
                 TextColumn::make('guest_status')
                     ->label('Status')
@@ -75,6 +77,44 @@ class CheckInReservationResource extends Resource
                 //
             ])
             ->actions([
+                Tables\Actions\Action::make('Add Extra Bed') // Aksi untuk menambah extra bed
+                    ->icon('heroicon-o-plus')
+                    ->requiresConfirmation()
+                    ->form([
+                        Forms\Components\TextInput::make('extra_beds')
+                            ->label('Number of Extra Beds')
+                            ->type('number')
+                            ->required(),
+                        Select::make('payment_method')
+                            ->label('Payment Method')
+                            ->required()
+                            ->options([
+                                'cash' => 'Cash',
+                                'bank_transfer' => 'Bank Transfer',
+                                'credit_card' => 'Credit Card',
+                            ])
+                            ->placeholder('Select a payment method'),
+                    ])
+                    ->action(function (Reservation $record, array $data) {
+                        // Assume extra bed price is defined somewhere, for example:
+                        $extraBedPrice = 100000; // Harga extra bed
+                        $totalExtraBedPrice = $extraBedPrice * $data['extra_beds'];
+
+                        // Create a new payment record for the extra bed
+                        Payment::create([
+                            'reservation_id' => $record->id,
+                            'amount' => $totalExtraBedPrice,
+                            'amount_paid_1' => $totalExtraBedPrice,
+                            'payment_method' => $data['payment_method'],
+                            'paid_at' => now(),
+                        ]);
+
+                        // Optionally, you could store the number of extra beds in a field in the Reservation model
+                        $record->increment('extra_bed', $data['extra_beds']);
+                    })
+                    ->color('success')
+                    ->visible(fn(Reservation $record) => $record->guest_status === 'Checked In'),
+
                 Tables\Actions\Action::make('Extend Checkout')
                     ->icon('heroicon-o-calendar')
                     ->requiresConfirmation()

@@ -77,13 +77,18 @@ class ReservationResource extends Resource
                                 ->multiple()
                                 ->placeholder('Select rooms'),
 
-                            DateTimePicker::make('check_in_date')
+                            DatePicker::make('check_in_date')
                                 ->label('Check-in')
                                 ->required(),
 
-                            DateTimePicker::make('check_out_date')
+                            DatePicker::make('check_out_date')
                                 ->label('Check-out')
                                 ->required(),
+
+                            TextInput::make('extra_bed')
+                                ->label('Extra Bed')
+                                ->numeric()
+                                ->default(0),
 
                             Select::make('status')
                                 ->label('Status')
@@ -118,13 +123,19 @@ class ReservationResource extends Resource
                         return $record->rooms->pluck('room_number')->join(', ');
                     }),
 
+                TextColumn::make('extra_bed')
+                    ->label('Extra Bed')
+                    ->sortable(),
+
                 TextColumn::make('check_in_date')
                     ->label('Check-in Date')
-                    ->sortable(),
+                    ->sortable()
+                    ->formatStateUsing(fn($state) => \Carbon\Carbon::parse($state)->translatedFormat('j F Y')),
 
                 TextColumn::make('check_out_date')
                     ->label('Check-out Date')
-                    ->sortable(),
+                    ->sortable()
+                    ->formatStateUsing(fn($state) => \Carbon\Carbon::parse($state)->translatedFormat('j F Y')),
 
                 TextColumn::make('status')
                     ->label('Status')
